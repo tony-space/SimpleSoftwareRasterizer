@@ -1,8 +1,11 @@
 project(host-gdi)
 
 set(SRC
+	Application.cpp
+	Application.hpp
 	main.cpp
-	pch.hpp)
+	pch.hpp
+)
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${SRC})
 
 add_executable(${PROJECT_NAME} WIN32 ${SRC})
