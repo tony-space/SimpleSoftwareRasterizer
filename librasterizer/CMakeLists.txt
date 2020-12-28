@@ -12,3 +12,4 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE pch.hpp)
 
 target_include_directories(${PROJECT_NAME} INTERFACE "api")
 target_link_libraries(${PROJECT_NAME} PRIVATE shared)
+target_link_libraries(${PROJECT_NAME} PUBLIC glm)

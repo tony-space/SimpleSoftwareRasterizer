@@ -5,6 +5,8 @@ project(SimpleSoftwareRasterizer LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+add_subdirectory(third-party/glm)
+
 include(shared.cmake)
 add_subdirectory(host-gdi)
 add_subdirectory(librasterizer)
