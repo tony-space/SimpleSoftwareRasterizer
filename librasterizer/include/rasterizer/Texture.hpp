@@ -7,7 +7,7 @@
 
 namespace rasterizer {
 
-class Texture
+class Texture final
 {
 public:
 	explicit Texture(unsigned width, unsigned height, const std::vector<gamma_bgra_t>& bitmap);

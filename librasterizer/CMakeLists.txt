@@ -3,6 +3,7 @@ project(librasterizer)
 set(SRC
 	include/rasterizer/gamma_bgra_t.hpp
 	include/rasterizer/linear_rgba_t.hpp
+	include/rasterizer/Mesh.hpp
 	include/rasterizer/Rasterizer.hpp
 	include/rasterizer/Texture.hpp
 
@@ -12,6 +13,8 @@ set(SRC
 	detail/glm-include.hpp
 	detail/linear_rgba_t.cpp
 	detail/LookUpTable.hpp
+	detail/Mesh.cpp
+	detail/MeshCube.cpp
 	detail/Rasterizer.cpp
 	detail/Texture.cpp
 

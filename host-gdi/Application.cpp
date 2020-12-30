@@ -39,6 +39,7 @@ Application::Application(HINSTANCE hInstance, int nShowCmd)
 	s_instance = this;
 
 	m_rasterizer.setTexture(loadTexture("../textures/Jupiter.bmp"));
+	m_rasterizer.setMesh(rasterizer::Mesh::cube());
 }
 
 int Application::run()
@@ -140,7 +141,7 @@ rasterizer::Texture Application::loadTexture(std::filesystem::path path)
 	bi.bmiHeader.biBitCount = bitmap.bmBitsPixel;
 	bi.bmiHeader.biCompression = BI_RGB;
 
-	auto stat = GetDIBits(GetDC(NULL), hBitmap, 0, bitmap.bmHeight, result.data(), &bi, DIB_RGB_COLORS);
+	GetDIBits(GetDC(NULL), hBitmap, 0, bitmap.bmHeight, result.data(), &bi, DIB_RGB_COLORS);
 	DeleteObject(hBitmap);
 	return rasterizer::Texture(bitmap.bmWidth, bitmap.bmHeight, result);
 }

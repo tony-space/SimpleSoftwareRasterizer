@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <execution>
 #include <iterator>
+#include <mutex>
 #include <numeric>
 #include <stdexcept>
 #include <utility>

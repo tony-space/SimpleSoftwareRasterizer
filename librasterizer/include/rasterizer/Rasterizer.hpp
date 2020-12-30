@@ -6,6 +6,7 @@
 
 #include "gamma_bgra_t.hpp"
 #include "linear_rgba_t.hpp"
+#include "Mesh.hpp"
 #include "Texture.hpp"
 
 namespace rasterizer {
@@ -22,6 +23,7 @@ public:
 	Rasterizer& operator=(Rasterizer&&) = delete;
 
 	void setTexture(Texture texture) noexcept;
+	void setMesh(Mesh mesh) noexcept;
 
 	void draw(unsigned width, unsigned height, std::vector<gamma_bgra_t>& out);
 private:
@@ -35,9 +37,9 @@ private:
 		float m_zFar{ 5.0f };
 		glm::vec3 lightPos{ glm::normalize(glm::vec3{0.0f, 0.0f, -1.0f}) };
 
-		glm::vec3 translate;
-		glm::vec3 rotate;
-		glm::vec3 scale;
+		glm::vec3 translate{ 0.0f, 0.0f, 2.0f };
+		glm::vec3 rotateDeg{ 0.0f, 0.0f, 0.0f };
+		glm::vec3 scale{ 1.0f, 1.0f, 1.0f };
 	} m_parameters;
 
 	struct MatrixState
@@ -50,8 +52,10 @@ private:
 	} m_matrices;
 
 	Texture m_texture{ 0, 0, {} };
+	Mesh m_mesh{ 0, 0 };
 
 	void setViewport(unsigned width, unsigned height);
+	void updateScene();
 	void cleanBuffers();
 	void swapBuffers(std::vector<gamma_bgra_t>& out);
 };
