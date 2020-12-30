@@ -4,5 +4,10 @@
 #include <Windows.h>
 
 #include <chrono>
+#include <cstdint>
+#include <filesystem>
+#include <stdexcept>
 #include <string>
 #include <vector>
+
+#include "../librasterizer/pch.hpp"

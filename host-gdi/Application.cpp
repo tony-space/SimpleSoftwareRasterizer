@@ -4,7 +4,7 @@ namespace gdi {
 
 Application* Application::s_instance{ nullptr };
 
-Application::Application(HINSTANCE hInstance, int nShowCmd) noexcept
+Application::Application(HINSTANCE hInstance, int nShowCmd)
 {
 	HWND		hWnd;
 	WNDCLASS	wndClass;
@@ -23,23 +23,25 @@ Application::Application(HINSTANCE hInstance, int nShowCmd) noexcept
 	RegisterClass(&wndClass);
 
 	hWnd = CreateWindow(
-		TEXT("SoftwareRendering"),   // window class name
-		TEXT("Software Rendering"),  // window caption
-		WS_OVERLAPPEDWINDOW,      // window style
-		CW_USEDEFAULT,            // initial x position
-		CW_USEDEFAULT,            // initial y position
-		800,            // initial x size
-		600,            // initial y size
-		NULL,                     // parent window handle
-		NULL,                     // window menu handle
-		hInstance,                // program instance handle
-		NULL);                    // creation parameters
+		TEXT("SoftwareRendering"),	// window class name
+		TEXT("Software Rendering"),	// window caption
+		WS_OVERLAPPEDWINDOW,		// window style
+		CW_USEDEFAULT,				// initial x position
+		CW_USEDEFAULT,				// initial y position
+		800,						// initial x size
+		600,						// initial y size
+		NULL,						// parent window handle
+		NULL,						// window menu handle
+		hInstance,					// program instance handle
+		NULL);						// creation parameters
 
 	ShowWindow(hWnd, nShowCmd);
 	s_instance = this;
+
+	m_rasterizer.setTexture(loadTexture("../textures/Jupiter.bmp"));
 }
 
-int Application::run() noexcept
+int Application::run()
 {
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -53,7 +55,7 @@ int Application::run() noexcept
 
 rasterizer::gamma_bgra_t* Application::draw(unsigned width, unsigned height)
 {
-	m_framebuffer.resize(width * height, {0, 0, 0, 0});
+	m_rasterizer.draw(width, height, m_framebuffer);
 	return m_framebuffer.data();
 }
 
@@ -116,6 +118,31 @@ LRESULT Application::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
+}
+
+rasterizer::Texture Application::loadTexture(std::filesystem::path path)
+{
+	auto hBitmap = (HBITMAP)LoadImageW(NULL, path.wstring().c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	if (hBitmap == NULL)
+	{
+		throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
+	}
+
+	BITMAP bitmap;
+	GetObject(hBitmap, sizeof(BITMAP), &bitmap);
+	std::vector<rasterizer::gamma_bgra_t> result(size_t(bitmap.bmWidth) * size_t(bitmap.bmHeight));
+
+	BITMAPINFO bi = { {}, {} };
+	bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
+	bi.bmiHeader.biWidth = bitmap.bmWidth;
+	bi.bmiHeader.biHeight = bitmap.bmHeight;
+	bi.bmiHeader.biPlanes = bitmap.bmPlanes;
+	bi.bmiHeader.biBitCount = bitmap.bmBitsPixel;
+	bi.bmiHeader.biCompression = BI_RGB;
+
+	auto stat = GetDIBits(GetDC(NULL), hBitmap, 0, bitmap.bmHeight, result.data(), &bi, DIB_RGB_COLORS);
+	DeleteObject(hBitmap);
+	return rasterizer::Texture(bitmap.bmWidth, bitmap.bmHeight, result);
 }
 
 }
