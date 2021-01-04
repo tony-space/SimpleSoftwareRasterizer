@@ -9,6 +9,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/reciprocal.hpp>
+#include <glm/gtc/epsilon.hpp>
+#include <glm/gtx/compatibility.hpp>
 
 #ifdef _MSC_VER
 #pragma warning (pop)

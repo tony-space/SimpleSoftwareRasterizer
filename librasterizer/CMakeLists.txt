@@ -9,6 +9,8 @@ set(SRC
 
 	detail/basic-matrices.cpp
 	detail/basic-matrices.hpp
+	detail/clipping.cpp
+	detail/clipping.hpp
 	detail/gamma_bgra_t.cpp
 	detail/glm-include.hpp
 	detail/linear_rgba_t.cpp
@@ -17,6 +19,7 @@ set(SRC
 	detail/MeshCube.cpp
 	detail/Rasterizer.cpp
 	detail/Texture.cpp
+	detail/Vertex.hpp
 
 	pch.hpp
 )
