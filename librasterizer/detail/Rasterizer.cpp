@@ -2,6 +2,7 @@
 
 #include "basic-matrices.hpp"
 #include "clipping.hpp"
+#include "BoundingBox2D.hpp"
 
 #include <rasterizer/Rasterizer.hpp>
 
@@ -27,13 +28,10 @@ void Rasterizer::draw(unsigned width, unsigned height, std::vector<gamma_bgra_t>
 
 void Rasterizer::resetViewport(unsigned width, unsigned height)
 {
-	m_framebuffer.width = width;
-	m_framebuffer.height = height;
-	m_framebuffer.color.resize(size_t(width) * size_t(height));
-	m_framebuffer.depth.resize(size_t(width) * size_t(height));
-	std::fill(std::execution::par_unseq, m_framebuffer.color.begin(), m_framebuffer.color.end(), linear_rgba_t{ 0, 0, 0, 0 });
-	std::fill(std::execution::par_unseq, m_framebuffer.depth.begin(), m_framebuffer.depth.end(), 1.0f);
-
+	m_framebuffer.screenSize = { width, height };
+	m_framebuffer.gridDim = Tile::computeGridDim(m_framebuffer.screenSize);
+	m_framebuffer.grid.resize(size_t(m_framebuffer.gridDim.x) * size_t(m_framebuffer.gridDim.y));
+	
 	m_pipeline.matrices.viewport = matrices::viewportTransformMatrix(float(width), float(height));
 	m_pipeline.matrices.projection = matrices::projectionMatrix(float(width), float(height), m_parameters.verticalFovDeg, m_parameters.zNear, m_parameters.zFar);
 }
@@ -133,77 +131,52 @@ void Rasterizer::viewportTransformStage()
 
 void Rasterizer::rasterizationStage()
 {
-	for (const auto& triangle : m_pipeline.projectedTriangles)
+	std::for_each(std::execution::par_unseq, m_pipeline.projectedTriangles.cbegin(), m_pipeline.projectedTriangles.cend(), [&](const std::array<Vertex, 3>& triangle)
 	{
-		std::for_each(std::execution::par_unseq, m_framebuffer.color.begin(), m_framebuffer.color.end(), [&](linear_rgba_t& out)
+		const auto triangleBox = BoundingBox2D{ triangle[0].position.xy(), triangle[1].position.xy(), triangle[2].position.xy() };
+		const auto minTile = glm::uvec2(glm::ceil(triangleBox.min())) / glm::uvec2(Tile::kSize);
+		const auto maxTile = glm::uvec2(glm::ceil(triangleBox.max())) / glm::uvec2(Tile::kSize);
+
+		for (unsigned yTile = minTile.y; yTile <= maxTile.y; ++yTile)
 		{
-			const auto idx = std::distance(m_framebuffer.color.data(), &out);
-			auto& depthValue = m_framebuffer.depth[idx];
-			const auto [yPixel, xPixel] = std::div(idx, m_framebuffer.width);
-			const auto point = glm::vec2(float(xPixel), float(yPixel));
+			const auto stride = m_framebuffer.gridDim.x * yTile;
+			for (unsigned xTile = minTile.x; xTile <= maxTile.x; ++xTile)
+			{
+				const auto idx = stride + xTile;
+				m_framebuffer.grid[idx].scheduleTriangle(triangle);
+			}
+		}
+	});
 
-			const auto areas = barycentric(triangle[0].position, triangle[1].position, triangle[2].position, point);
-			const auto barycentricPos = glm::vec3(areas) / areas.w;
+	std::for_each(std::execution::par_unseq, m_framebuffer.grid.begin(), m_framebuffer.grid.end(), [&](Tile& tile)
+	{
+		const auto idx = std::distance(m_framebuffer.grid.data(), &tile);
+		const auto [yTile, xTile] = std::div(idx, m_framebuffer.gridDim.x);
 
-			//render only the front side
-			if (!(areas.x >= 0.0f && areas.y >= 0.0f && areas.z >= 0.0f))
-				return;
-			//render both sides of the triangle
-			//if (!(barycentricPos.x >= 0.0f && barycentricPos.y >= 0.0f && barycentricPos.z >= 0.0f))
-			//	return;
+		const auto tileMin = glm::vec2(xTile, yTile) * glm::vec2(Tile::kSize);
+		const auto tileMax = tileMin + glm::vec2(Tile::kSize);
 
-			const auto barycentricPerZ = barycentricPos / glm::vec3(triangle[0].position.w, triangle[1].position.w, triangle[2].position.w);					// (alpha/Za, beta/Zb, gamma/Zc)
-			const auto interpolatedOriginalZ = 1.0f / (barycentricPerZ.x + barycentricPerZ.y + barycentricPerZ.z);												// 1 / (alpha/Za + beta/Zb + gamma/Zc)
-			const auto interpolatedNormalizedZ = glm::dot(barycentricPos, glm::vec3(triangle[0].position.z, triangle[1].position.z, triangle[2].position.z));	// alpha * Zna + beta * Znb + gamma * Znb
+		const auto tileBox = BoundingBox2D{ tileMin, tileMax };
 
-			// depth test
-			if (interpolatedNormalizedZ > depthValue)
-				return;
-			//depth write
-			depthValue = interpolatedNormalizedZ;
-
-			//perspective correct interpolations
-			const auto interpolatedNormal = interpolate(barycentricPerZ, interpolatedOriginalZ, triangle[0].normal, triangle[1].normal, triangle[2].normal);
-			const auto interpolatedTc = interpolate(barycentricPerZ, interpolatedOriginalZ, triangle[0].texCoord0, triangle[1].texCoord0, triangle[2].texCoord0);
-			/*const auto interpolatedNormal = triangle[0].normal * barycentricPos.x + triangle[1].normal * barycentricPos.y + triangle[2].normal * barycentricPos.z;
-			const auto interpolatedTc = triangle[0].texCoord0 * barycentricPos.x + triangle[1].texCoord0 * barycentricPos.y + triangle[2].texCoord0 * barycentricPos.z;*/
-
-			//Lambertian BRDF
-			const auto diffuse = glm::clamp(glm::dot(glm::normalize(interpolatedNormal.xyz()), m_parameters.lightPos), 0.1f, 1.0f);
-			//const auto color = glm::u8vec3(diffuse * sampleTexture(texture, interpolatedTc));
-			//out = linear_bgra_t{ color.b, color.g, color.r, 255 };
-			const auto result = glm::u8vec3(diffuse * m_texture.sample(interpolatedTc) * 255.0f);
-			out = {
-				result.x,
-				result.y,
-				result.z
-			};
-		});
-	}
+		tile.rasterize(tileBox, { m_parameters.lightPos, m_texture});
+	});
 }
 
 void Rasterizer::swapBuffers(std::vector<gamma_bgra_t>& out)
 {
-	out.resize(m_framebuffer.color.size());
-	std::transform(std::execution::par_unseq, m_framebuffer.color.cbegin(), m_framebuffer.color.cend(), out.begin(), &gamma_bgra_t::from);
-}
+	out.resize(size_t(m_framebuffer.screenSize.x) * size_t(m_framebuffer.screenSize.y));
 
-glm::vec4 Rasterizer::barycentric(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c, const glm::vec2& point) noexcept
-{
-	const auto Sa = glm::cross(glm::vec3(c - b, 0.0f), glm::vec3(point - b, 0.0f)).z;
-	const auto Sb = glm::cross(glm::vec3(a - c, 0.0f), glm::vec3(point - c, 0.0f)).z;
-	const auto Sc = glm::cross(glm::vec3(b - a, 0.0f), glm::vec3(point - a, 0.0f)).z;
-
-	const auto S = Sa + Sb + Sc;
-	//const auto S = glm::cross(glm::vec3(b - a, 0.0f), glm::vec3(c - a, 0.0f)).z;
-
-	return
+	std::for_each(std::execution::par_unseq, out.begin(), out.end(), [&](gamma_bgra_t& result)
 	{
-		Sa,
-		Sb,
-		Sc,
-		S
-	};
+		const auto idx = std::distance(out.data(), &result);
+		const auto [yPixel, xPixel] = std::div(idx, m_framebuffer.screenSize.x);
+		const auto xTile = xPixel / Tile::kSize;
+		const auto yTile = yPixel / Tile::kSize;
+		const auto tileIdx = m_framebuffer.gridDim.x * yTile + xTile;
+		const auto& tile = m_framebuffer.grid[tileIdx];
+
+		result = gamma_bgra_t::from(tile.at(xPixel - xTile * Tile::kSize, yPixel - yTile * Tile::kSize));
+	});
 }
 
 }

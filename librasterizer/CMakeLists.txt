@@ -9,6 +9,7 @@ set(SRC
 
 	detail/basic-matrices.cpp
 	detail/basic-matrices.hpp
+	detail/BoundingBox2D.hpp
 	detail/clipping.cpp
 	detail/clipping.hpp
 	detail/gamma_bgra_t.cpp
@@ -19,6 +20,8 @@ set(SRC
 	detail/MeshCube.cpp
 	detail/Rasterizer.cpp
 	detail/Texture.cpp
+	detail/Tile.cpp
+	detail/Tile.hpp
 	detail/Vertex.hpp
 
 	pch.hpp

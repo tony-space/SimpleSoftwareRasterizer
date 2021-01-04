@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "../../detail/glm-include.hpp"
+#include "../../detail/Tile.hpp"
 #include "../../detail/Vertex.hpp"
 
 #include "gamma_bgra_t.hpp"
@@ -31,10 +32,9 @@ public:
 private:
 	struct Framebuffer
 	{
-		unsigned width;
-		unsigned height;
-		std::vector<linear_rgba_t> color;
-		std::vector<float> depth;
+		glm::uvec2 screenSize;
+		glm::uvec2 gridDim;
+		std::vector<Tile> grid;
 	} m_framebuffer;
 
 	struct Parameters
@@ -42,7 +42,7 @@ private:
 		float verticalFovDeg{ 60.0f };
 		float zNear{ 0.5f };
 		float zFar{ 5.0f };
-		glm::vec3 lightPos{ glm::normalize(glm::vec3{0.0f, 0.0f, -1.0f}) };
+		glm::vec3 lightPos{ glm::normalize(glm::vec3{1.0f, 1.0f, -1.0f}) };
 
 		glm::vec3 translate{ 0.0f, 0.0f, 2.0f };
 		glm::vec3 rotateDeg{ 0.0f, 0.0f, 0.0f };
@@ -80,15 +80,6 @@ private:
 	void viewportTransformStage();
 	void rasterizationStage();
 	void swapBuffers(std::vector<gamma_bgra_t>& out);
-
-	static glm::vec4 barycentric(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c, const glm::vec2& point) noexcept;
-	template <typename T> static T interpolate(const glm::vec3& barycentricPerZ, float interpolatedOriginalZ, const T& f1, const T& f2, const T& f3);
 };
-
-template<typename T>
-T Rasterizer::interpolate(const glm::vec3& barycentricPerZ, float interpolatedOriginalZ, const T& f1, const T& f2, const T& f3)
-{
-	return interpolatedOriginalZ * (barycentricPerZ.x * f1 + barycentricPerZ.y * f2 + barycentricPerZ.z * f3);
-}
 
 }
