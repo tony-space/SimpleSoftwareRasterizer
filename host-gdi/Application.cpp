@@ -102,11 +102,18 @@ LRESULT Application::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		EndPaint(hWnd, &ps);
 
 		static auto last = std::chrono::high_resolution_clock::now();
+		static unsigned framesCounter = 0;
+		
 		auto cur = std::chrono::high_resolution_clock::now();
-		auto duration = cur - last;
-		last = cur;
+		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(cur - last).count();
+		framesCounter++;
 
-		SetWindowTextA(hWnd, std::to_string(1'000'000'000.0f / std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count()).c_str());
+		if (duration >= 2000)
+		{
+			SetWindowTextA(hWnd, std::to_string(float(framesCounter) / 2.0f).c_str());
+			framesCounter = 0;
+			last = cur;
+		}
 
 		RedrawWindow(hWnd, NULL, NULL, RDW_INVALIDATE | RDW_INTERNALPAINT);
 		return 0;
