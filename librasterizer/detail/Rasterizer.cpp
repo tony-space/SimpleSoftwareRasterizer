@@ -38,8 +38,12 @@ void Rasterizer::resetViewport(unsigned width, unsigned height)
 
 void Rasterizer::updateScene()
 {
+	static uint64_t frameIdx = 0;
+
 	m_parameters.rotateDeg.x += 0.25f;
 	m_parameters.rotateDeg.y += 0.25f;
+	m_parameters.translate.z = glm::cos(frameIdx * 0.01f) + 1.0f;
+	frameIdx++;
 
 	m_pipeline.matrices.modelView = matrices::viewMatrix(m_parameters.rotateDeg, m_parameters.translate) * glm::scale(glm::identity<glm::mat4>(), m_parameters.scale);
 	m_pipeline.matrices.normal = glm::transpose(glm::inverse(m_pipeline.matrices.modelView));
@@ -134,8 +138,11 @@ void Rasterizer::rasterizationStage()
 	std::for_each(std::execution::par_unseq, m_pipeline.projectedTriangles.cbegin(), m_pipeline.projectedTriangles.cend(), [&](const std::array<Vertex, 3>& triangle)
 	{
 		const auto triangleBox = BoundingBox2D{ triangle[0].position.xy(), triangle[1].position.xy(), triangle[2].position.xy() };
-		const auto minTile = glm::uvec2(glm::ceil(triangleBox.min())) / glm::uvec2(Tile::kSize);
-		const auto maxTile = glm::uvec2(glm::ceil(triangleBox.max())) / glm::uvec2(Tile::kSize);
+		const auto minPixel = glm::uvec2(glm::ceil(triangleBox.min()));
+		const auto maxPixel = glm::min(glm::uvec2(glm::ceil(triangleBox.max())), m_framebuffer.screenSize - glm::uvec2(1));
+
+		const auto minTile = minPixel / glm::uvec2(Tile::kSize);
+		const auto maxTile = maxPixel / glm::uvec2(Tile::kSize);
 
 		for (unsigned yTile = minTile.y; yTile <= maxTile.y; ++yTile)
 		{

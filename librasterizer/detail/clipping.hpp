@@ -10,13 +10,16 @@
 namespace rasterizer {
 namespace clipping {
 
-/// <summary>
-/// Clips the triangle.
-/// Given the distances from each vertex to the plane the function produces zero, one, or two triangles.
-/// </summary>
-/// <param name="planeDistances">distances from each vertex to the clipping plane</param>
-/// <returns>either an empty result or barycentric coordinates (alpha, beta, 1 - alpha - beta) of a new polygon relative to the original triangle</returns>
-std::variant<std::monostate, std::array<glm::vec2, 3>, std::array<glm::vec2, 4>> triangleClip(const glm::vec3& planeDistances) noexcept;
+struct discard
+{
+};
+struct leaveAsIs
+{
+};
+
+typedef std::variant<discard, leaveAsIs, std::array<glm::vec2, 3>, std::array<glm::vec2, 4>> triangle_clip_t;
+
+triangle_clip_t triangleClip(const glm::vec3& planeDistances) noexcept;
 
 template <typename T>
 T interpolate(const typename std::array<T, 3>& props, const glm::vec2& barycentric)
@@ -39,9 +42,15 @@ struct RecursiveClipper
 
 	//discard triangle
 	template<>
-	void operator ()(const std::monostate& /*empty*/)
+	void operator ()(const discard& /*empty*/)
 	{
 
+	}
+
+	template<>
+	void operator ()(const leaveAsIs&)
+	{
+		std::terminate();
 	}
 
 	//write triangle
@@ -50,21 +59,32 @@ struct RecursiveClipper
 	{
 		const std::array<Vertex, 3> interpolatedTriangle{ interpolate(vertices, triangle[0]), interpolate(vertices, triangle[1]), interpolate(vertices, triangle[2]) };
 
-		if (curPlane == endPlane)
+		triangle_clip_t clippingResult{ leaveAsIs{} };
+		
+		auto plane = curPlane;
+		
+		while (true)
 		{
-			output.emplace_back(interpolatedTriangle);
-			return;
-		}
+			if (plane == endPlane)
+			{
+				output.emplace_back(interpolatedTriangle);
+				return;
+			}
 
-		const auto clippingResult = triangleClip({
-			glm::dot(*curPlane, interpolatedTriangle[0].position),
-			glm::dot(*curPlane, interpolatedTriangle[1].position),
-			glm::dot(*curPlane, interpolatedTriangle[2].position) });
+			clippingResult = triangleClip({
+				glm::dot(*plane, interpolatedTriangle[0].position),
+				glm::dot(*plane, interpolatedTriangle[1].position),
+				glm::dot(*plane, interpolatedTriangle[2].position) });
+
+			if (clippingResult.index() != 1)
+				break;
+			plane++;
+		}
 
 		RecursiveClipper clipper
 		{
 			interpolatedTriangle,
-			curPlane + 1,
+			plane + 1,
 			endPlane,
 			output
 		};

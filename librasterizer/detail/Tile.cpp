@@ -50,10 +50,14 @@ void Tile::rasterize(const BoundingBox2D& tileBox, const UniformData& uniforms) 
 				const auto point = tileBox.min() + glm::vec2(x, y);
 				const auto areas = barycentric(triangle[0].position, triangle[1].position, triangle[2].position, point);
 				//render only the front side
-				if (!(areas.x >= 0.0f && areas.y >= 0.0f && areas.z >= 0.0f))
+				//if (!(areas.x >= 0.0f && areas.y >= 0.0f && areas.z >= 0.0f))
+				//	continue;
+				const auto barycentricPos = glm::vec3(areas) / areas.w;
+
+				//render both sides of the triangle
+				if (!(barycentricPos.x >= 0.0f && barycentricPos.y >= 0.0f && barycentricPos.z >= 0.0f))
 					continue;
 
-				const auto barycentricPos = glm::vec3(areas) / areas.w;
 				const auto idx = stride + x;
 				drawImpl(uniforms, triangle, barycentricPos, m_color[idx], m_depth[idx]);
 			}
@@ -98,7 +102,6 @@ void Tile::drawImpl(const UniformData& uniforms, const std::array<Vertex, 3>& tr
 
 	//Lambertian BRDF
 	const auto diffuse = glm::clamp(glm::dot(glm::normalize(interpolatedNormal.xyz()), uniforms.lightPos), 0.025f, 1.0f);
-	//const auto color = glm::u8vec3(diffuse * sampleTexture(texture, interpolatedTc));
 	color =
 	{
 		diffuse * uniforms.texture.sample(interpolatedTc),

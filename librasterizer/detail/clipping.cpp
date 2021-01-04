@@ -9,7 +9,7 @@ static float isovalue(float first, float second) noexcept
 	return first / (first - second);
 }
 
-std::variant<std::monostate, std::array<glm::vec2, 3>, std::array<glm::vec2, 4>> triangleClip(const glm::vec3& planeDistances) noexcept
+triangle_clip_t triangleClip(const glm::vec3& planeDistances) noexcept
 {
 	constexpr std::array<glm::vec2, 3> kTriangle{ glm::vec2{ 1.0f, 0.0f }, glm::vec2{ 0.0f, 1.0f }, glm::vec2{ 0.0f, 0.0f } };
 
@@ -33,13 +33,12 @@ std::variant<std::monostate, std::array<glm::vec2, 3>, std::array<glm::vec2, 4>>
 	{
 	case 3:
 	{
-		//pass the whole triangle as is
-		return kTriangle;
+		return leaveAsIs{};
 	}
 	case 0:
 	{
 		//discard the whole triangle
-		return std::monostate{};
+		return discard{};
 	}
 	case 1:
 	case 2:
