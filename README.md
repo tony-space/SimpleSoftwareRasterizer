@@ -8,8 +8,9 @@ This project is not intended to be the fastest and the best software renderer ev
 
 ## How to run
 
-There are two ways to do that: 
+There are three ways to do that: 
 
+* Dowload a built executable from [releases](https://github.com/tony-space/SimpleSoftwareRasterizer/releases).
 * Using a standalone command. Run `build-and-run.bat`.
 * Using Visual Studio. To generate VS2019 solution run `gen-VS2019-x64.bat`. Then compile and run the app.
 
@@ -22,14 +23,31 @@ There are only two modules:
 
 ## Supported features
 
+* Basic obj file support (enough to load the Stanford Bunny).
 * Clipping in the homogeneous clip space (before perspective division).
 * Tiled rasterization.
 * Perspective-correct interpolation of vertex attributes.
 * Per-pixel lighting via Lambertian BRDF.
 * Gamma correction.
-* Basic obj file support (enough to load the Stanford bunny).
 
 ### Clipping
+
+Clipping is a necessary step of any rasterization process.
+The general misconception is the clipping is an optimization, but it's not actually.
+The real goal of the clipping is preventing weird things from happening.
+
+Firstly, objects behind the camera must not get projected on the screen:
+
+![](https://www.scratchapixel.com/images/upload/perspective-matrix/clipping4.png)
+
+*Image by Scratchapixel. [Source](https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/projection-matrices-what-you-need-to-know-first).*
+
+Secondly, objects crossing the projective plane must not wrap around:
+
+![](screenshots/clipping.jpg)
+
+*Image by J.F. Blinn and M.E. Newell. [Source](https://www.microsoft.com/en-us/research/wp-content/uploads/1978/01/p245-blinn.pdf)*
+
 
 The clipping process works with a custom set of planes. The clipper may leave the triangle as is or chop it onto multiple triangles as follows:
 ![](screenshots/screenshot4.jpg)
@@ -38,6 +56,7 @@ The clipper is semi-parallel. It processes mesh triangles in parallel.
 However, when it comes to emitting a new triangle, the clipper waits for a spin-lock.
 
 ### Tiled rasterization
+
 A naive rasterizer takes a bounding box of a triangle and starts testing pixel coverage inside that box.
 In the case of a thin but long triangle, most pixels fail the coverage test, so only a few of them perform rasterization.
 
@@ -46,7 +65,7 @@ A naive rasterizer cannot process these triangles in parallel due to potential d
 
 ![](https://developer.nvidia.com/sites/default/files/akamai/gameworks/images/lifeofatriangle/fermipipeline_raster.png)
 
-Image by Nvidia. [Source](https://developer.nvidia.com/content/life-triangle-nvidias-logical-pipeline).
+*Image by Nvidia. [Source](https://developer.nvidia.com/content/life-triangle-nvidias-logical-pipeline).*
 
 Tiled rasterization is an optimization that increases the general level of parallelism. All triangles are scheduled to the tiles they cover. After the work assignment, these tiles start working parallel without sharing data, meaning there's no risk of a data race. Under the hood, the tiles are serial machines.
 
@@ -56,7 +75,7 @@ Gamma correction is essential when it comes to light computation. It gets done i
 However, monitors are non-linear. The generated image must be additionally post-processed before display.
 
 ![](screenshots/screenshot3.jpg)
-Left: gamma corrected image. Right: linear image.
+*Left: gamma corrected image. Right: linear image.*
 
 ## Limitations
 
@@ -66,6 +85,6 @@ Left: gamma corrected image. Right: linear image.
 * No texture filtering.
 * After all, it's a simple thing.
 
-## Third-Party libraries
+## Third-Parties
 
 The project uses [GLM library](https://github.com/g-truc/glm) and [the Stanford Bunny model](https://en.wikipedia.org/wiki/Stanford_bunny).
