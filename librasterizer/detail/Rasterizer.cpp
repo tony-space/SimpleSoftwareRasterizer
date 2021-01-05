@@ -186,7 +186,7 @@ void Rasterizer::swapBuffers(std::vector<gamma_bgra_t>& out)
 		const auto tileIdx = m_framebuffer.gridDim.x * yTile + xTile;
 		const auto& tile = m_framebuffer.grid[tileIdx];
 
-		const auto corrected = glm::pow(tile.at(xPixel - xTile * Tile::kSize, yPixel - yTile * Tile::kSize), glm::vec4(1.0f / 2.0f));
+		const auto corrected = glm::pow(tile.at(xPixel - xTile * Tile::kSize, yPixel - yTile * Tile::kSize), glm::vec4(1.0f / 2.2f));
 		result.b = uint8_t(corrected.b * 255.0f);
 		result.g = uint8_t(corrected.g * 255.0f);
 		result.r = uint8_t(corrected.r * 255.0f);

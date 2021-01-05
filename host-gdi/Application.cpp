@@ -38,11 +38,12 @@ Application::Application(HINSTANCE hInstance, int nShowCmd)
 	ShowWindow(hWnd, nShowCmd);
 	s_instance = this;
 
-	//m_rasterizer.setTexture(loadTexture("../textures/Jupiter.bmp"));
-	//m_rasterizer.setTexture(loadTexture("../textures/UV_Grid_Sm.bmp"));
-	m_rasterizer.setTexture(loadTexture("../textures/Moon.bmp"));
-	//m_rasterizer.setTexture(loadTexture("../textures/white.bmp"));
+	//m_rasterizer.setTexture(loadTexture("../assets/Jupiter.bmp"));
+	//m_rasterizer.setTexture(loadTexture("../assets/UV_Grid_Sm.bmp"));
+	m_rasterizer.setTexture(loadTexture("../assets/Moon.bmp"));
+	//m_rasterizer.setTexture(loadTexture("../assets/white.bmp"));
 	m_rasterizer.setMesh(rasterizer::Mesh::sphere());
+	//m_rasterizer.setMesh(rasterizer::Mesh::cube());
 }
 
 int Application::run()

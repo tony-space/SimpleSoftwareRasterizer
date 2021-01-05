@@ -2,8 +2,9 @@
 
 #include <vector>
 
+#include "../../detail/glm-include.hpp"
+
 #include "gamma_bgra_t.hpp"
-#include "linear_rgba_t.hpp"
 
 namespace rasterizer {
 
@@ -18,10 +19,10 @@ public:
 	Texture& operator=(const Texture&) = default;
 	Texture& operator=(Texture&&) noexcept = default;
 
-	glm::vec3 sample(glm::vec2 textureCoords) const noexcept;
+	glm::vec4 sample(glm::vec2 textureCoords) const noexcept;
 
 private:
-	std::vector<linear_rgba_t> m_texels;
+	std::vector<glm::vec4> m_texels;
 	unsigned m_width;
 	unsigned m_height;
 };

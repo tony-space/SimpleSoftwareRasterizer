@@ -17,10 +17,10 @@ add_subdirectory(librasterizer)
 
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "host-gdi")
 
-set(Textures 
-	textures/Jupiter.bmp
-	textures/Moon.bmp
-	textures/UV_Grid_Sm.bmp
+set(Assets 
+	assets/Jupiter.bmp
+	assets/Moon.bmp
+	assets/UV_Grid_Sm.bmp
 )
 
-file(COPY ${Textures} DESTINATION textures)
+file(COPY ${Assets} DESTINATION assets)

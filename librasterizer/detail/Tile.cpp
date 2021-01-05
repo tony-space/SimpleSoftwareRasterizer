@@ -98,11 +98,7 @@ void Tile::drawImpl(const UniformData& uniforms, const std::array<Vertex, 3>& tr
 
 	//Lambertian BRDF
 	const auto diffuse = glm::clamp(glm::dot(glm::normalize(interpolatedNormal.xyz()), uniforms.lightPos), 0.01f, 1.0f);
-	color =
-	{
-		diffuse * uniforms.texture.sample(interpolatedTc),
-		1.0f
-	};
+	color = diffuse * uniforms.texture.sample(interpolatedTc);
 }
 
 glm::vec4 Tile::barycentric(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c, const glm::vec2& point) noexcept

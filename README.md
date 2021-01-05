@@ -22,7 +22,7 @@ There are only two modules:
 
 ## Supported features
 
-* Clipping in the homogeneous space (before perspective division).
+* Clipping in the homogeneous clip space (before perspective division).
 * Tiled rasterization.
 * Perspective-correct interpolation of vertex attributes.
 * Per-pixel lighting via Lambertian BRDF.
