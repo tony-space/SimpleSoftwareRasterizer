@@ -28,6 +28,7 @@ public:
 	const std::vector<glm::u16vec3>& triangles() const noexcept;
 
 	static const Mesh& cube();
+	static const Mesh& sphere();
 
 private:
 	std::vector<glm::vec3> m_positions;

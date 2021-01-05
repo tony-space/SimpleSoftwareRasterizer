@@ -38,12 +38,12 @@ void Rasterizer::resetViewport(unsigned width, unsigned height)
 
 void Rasterizer::updateScene()
 {
-	static uint64_t frameIdx = 0;
-
 	m_parameters.rotateDeg.x += 0.25f;
 	m_parameters.rotateDeg.y += 0.25f;
-	m_parameters.translate.z = glm::cos(frameIdx * 0.01f) + 1.0f;
-	frameIdx++;
+
+	/*static uint64_t frameIdx = 0;
+	m_parameters.translate.z = glm::cos(frameIdx * 0.01f) + 0.5f;
+	frameIdx++;*/
 
 	m_pipeline.matrices.modelView = matrices::viewMatrix(m_parameters.rotateDeg, m_parameters.translate) * glm::scale(glm::identity<glm::mat4>(), m_parameters.scale);
 	m_pipeline.matrices.normal = glm::transpose(glm::inverse(m_pipeline.matrices.modelView));
@@ -165,7 +165,7 @@ void Rasterizer::rasterizationStage()
 
 		const auto tileBox = BoundingBox2D{ tileMin, tileMax };
 
-		tile.rasterize(tileBox, { m_parameters.lightPos, m_texture});
+		tile.rasterize(tileBox, { m_pipeline.matrices.modelView * glm::vec4(m_parameters.lightPos, 0.0f), m_texture});
 	});
 }
 
@@ -182,7 +182,11 @@ void Rasterizer::swapBuffers(std::vector<gamma_bgra_t>& out)
 		const auto tileIdx = m_framebuffer.gridDim.x * yTile + xTile;
 		const auto& tile = m_framebuffer.grid[tileIdx];
 
-		result = gamma_bgra_t::from(tile.at(xPixel - xTile * Tile::kSize, yPixel - yTile * Tile::kSize));
+		const auto corrected = glm::pow(tile.at(xPixel - xTile * Tile::kSize, yPixel - yTile * Tile::kSize), glm::vec4(1.0f / 2.0f));
+		result.b = uint8_t(corrected.b * 255.0f);
+		result.g = uint8_t(corrected.g * 255.0f);
+		result.r = uint8_t(corrected.r * 255.0f);
+		result.a = uint8_t(corrected.a * 255.0f);
 	});
 }
 

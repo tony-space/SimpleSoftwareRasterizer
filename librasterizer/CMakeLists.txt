@@ -18,6 +18,7 @@ set(SRC
 	detail/LookUpTable.hpp
 	detail/Mesh.cpp
 	detail/MeshCube.cpp
+	detail/MeshSphere.cpp
 	detail/Rasterizer.cpp
 	detail/Texture.cpp
 	detail/Tile.cpp

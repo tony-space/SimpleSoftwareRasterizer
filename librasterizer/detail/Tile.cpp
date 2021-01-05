@@ -50,13 +50,16 @@ void Tile::rasterize(const BoundingBox2D& tileBox, const UniformData& uniforms) 
 				const auto point = tileBox.min() + glm::vec2(x, y);
 				const auto areas = barycentric(triangle[0].position, triangle[1].position, triangle[2].position, point);
 				//render only the front side
-				//if (!(areas.x >= 0.0f && areas.y >= 0.0f && areas.z >= 0.0f))
-				//	continue;
+				if (!(areas.x >= 0.0f && areas.y >= 0.0f && areas.z >= 0.0f))
+					continue;
 				const auto barycentricPos = glm::vec3(areas) / areas.w;
 
+				/*if (barycentricPos.x > 0.01f && barycentricPos.y > 0.01f && barycentricPos.z > 0.01f)
+					continue;*/
+
 				//render both sides of the triangle
-				if (!(barycentricPos.x >= 0.0f && barycentricPos.y >= 0.0f && barycentricPos.z >= 0.0f))
-					continue;
+				/*if (!(barycentricPos.x >= 0.0f && barycentricPos.y >= 0.0f && barycentricPos.z >= 0.0f))
+					continue;*/
 
 				const auto idx = stride + x;
 				drawImpl(uniforms, triangle, barycentricPos, m_color[idx], m_depth[idx]);
@@ -67,16 +70,9 @@ void Tile::rasterize(const BoundingBox2D& tileBox, const UniformData& uniforms) 
 	m_triangles.clear();
 }
 
-linear_rgba_t Tile::at(size_t x, size_t y) const noexcept
+glm::vec4 Tile::at(size_t x, size_t y) const noexcept
 {
-	const auto color = m_color[y * kSize + x];
-	return
-	{
-		uint8_t(color.r * 255.0f),
-		uint8_t(color.g * 255.0f),
-		uint8_t(color.b * 255.0f),
-		uint8_t(color.a * 255.0f)
-	};
+	return m_color[y * kSize + x];
 }
 
 glm::uvec2 Tile::computeGridDim(glm::uvec2 screenSize) noexcept
@@ -101,7 +97,7 @@ void Tile::drawImpl(const UniformData& uniforms, const std::array<Vertex, 3>& tr
 	const auto interpolatedTc = interpolate(barycentricPerZ, interpolatedOriginalZ, triangle[0].texCoord0, triangle[1].texCoord0, triangle[2].texCoord0);
 
 	//Lambertian BRDF
-	const auto diffuse = glm::clamp(glm::dot(glm::normalize(interpolatedNormal.xyz()), uniforms.lightPos), 0.025f, 1.0f);
+	const auto diffuse = glm::clamp(glm::dot(glm::normalize(interpolatedNormal.xyz()), uniforms.lightPos), 0.01f, 1.0f);
 	color =
 	{
 		diffuse * uniforms.texture.sample(interpolatedTc),

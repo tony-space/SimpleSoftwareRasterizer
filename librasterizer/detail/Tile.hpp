@@ -5,8 +5,6 @@
 #include <memory>
 #include <vector>
 
-#include <rasterizer/linear_rgba_t.hpp>
-
 #include "glm-include.hpp"
 #include "Vertex.hpp"
 
@@ -36,7 +34,7 @@ public:
 
 	void scheduleTriangle(const std::array<Vertex, 3>& triangle);
 	void rasterize(const BoundingBox2D& tileBox, const UniformData& uniforms) noexcept;
-	linear_rgba_t at(size_t x, size_t y) const noexcept;
+	glm::vec4 at(size_t x, size_t y) const noexcept;
 
 	static glm::uvec2 computeGridDim(glm::uvec2 screenSize) noexcept;
 private:

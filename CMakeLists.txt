@@ -19,6 +19,7 @@ set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "host-gdi")
 
 set(Textures 
 	textures/Jupiter.bmp
+	textures/Moon.bmp
 	textures/UV_Grid_Sm.bmp
 )
 
