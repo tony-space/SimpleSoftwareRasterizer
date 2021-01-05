@@ -27,6 +27,7 @@ There are only two modules:
 * Perspective-correct interpolation of vertex attributes.
 * Per-pixel lighting via Lambertian BRDF.
 * Gamma correction.
+* Basic obj file support (enough to load the Stanford bunny).
 
 ### Clipping
 
@@ -67,4 +68,4 @@ Left: gamma corrected image. Right: linear image.
 
 ## Third-Party libraries
 
-The project uses [GLM library](https://github.com/g-truc/glm).
+The project uses [GLM library](https://github.com/g-truc/glm) and [the Stanford Bunny model](https://en.wikipedia.org/wiki/Stanford_bunny).

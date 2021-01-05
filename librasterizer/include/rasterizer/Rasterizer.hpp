@@ -44,7 +44,7 @@ private:
 		float zFar{ 5.0f };
 		glm::vec3 lightPos{ glm::normalize(glm::vec3{1.0f, 1.0f, -1.0f}) };
 
-		glm::vec3 translate{ 0.0f, 0.0f, 2.0f };
+		glm::vec3 translate{ 0.0f, -1.0f, 3.0f };
 		glm::vec3 rotateDeg{ 0.0f, 0.0f, 0.0f };
 		glm::vec3 scale{ 1.0f, 1.0f, 1.0f };
 	} m_parameters;

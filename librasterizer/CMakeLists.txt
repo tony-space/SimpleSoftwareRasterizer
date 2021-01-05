@@ -4,6 +4,7 @@ set(SRC
 	include/rasterizer/gamma_bgra_t.hpp
 	include/rasterizer/linear_rgba_t.hpp
 	include/rasterizer/Mesh.hpp
+	include/rasterizer/obj-loader.hpp
 	include/rasterizer/Rasterizer.hpp
 	include/rasterizer/Texture.hpp
 
@@ -19,6 +20,7 @@ set(SRC
 	detail/Mesh.cpp
 	detail/MeshCube.cpp
 	detail/MeshSphere.cpp
+	detail/obj-loader.cpp
 	detail/Rasterizer.cpp
 	detail/Texture.cpp
 	detail/Tile.cpp

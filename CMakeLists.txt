@@ -18,6 +18,7 @@ add_subdirectory(librasterizer)
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "host-gdi")
 
 set(Assets 
+	assets/bunny.obj
 	assets/Jupiter.bmp
 	assets/Moon.bmp
 	assets/UV_Grid_Sm.bmp

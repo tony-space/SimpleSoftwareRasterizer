@@ -40,8 +40,8 @@ void Rasterizer::resetViewport(unsigned width, unsigned height)
 
 void Rasterizer::updateScene()
 {
-	m_parameters.rotateDeg.x += 0.25f;
-	m_parameters.rotateDeg.y += 0.25f;
+	//m_parameters.rotateDeg.x -= 0.25f;
+	m_parameters.rotateDeg.y -= 0.5f;
 
 	/*static uint64_t frameIdx = 0;
 	m_parameters.translate.z = glm::cos(frameIdx * 0.01f) + 0.5f;
@@ -169,7 +169,7 @@ void Rasterizer::rasterizationStage()
 
 		const auto tileBox = BoundingBox2D{ tileMin, tileMax };
 
-		tile.rasterize(tileBox, { m_pipeline.matrices.modelView * glm::vec4(m_parameters.lightPos, 0.0f), m_texture});
+		tile.rasterize(tileBox, { /*m_pipeline.matrices.modelView **/ glm::vec4(m_parameters.lightPos, 0.0f), m_texture});
 	});
 }
 

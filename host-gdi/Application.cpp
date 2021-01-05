@@ -1,3 +1,5 @@
+#include <rasterizer/obj-loader.hpp>
+
 #include "Application.hpp"
 
 namespace gdi {
@@ -39,11 +41,12 @@ Application::Application(HINSTANCE hInstance, int nShowCmd)
 	s_instance = this;
 
 	//m_rasterizer.setTexture(loadTexture("../assets/Jupiter.bmp"));
-	//m_rasterizer.setTexture(loadTexture("../assets/UV_Grid_Sm.bmp"));
-	m_rasterizer.setTexture(loadTexture("../assets/Moon.bmp"));
+	m_rasterizer.setTexture(loadTexture("../assets/UV_Grid_Sm.bmp"));
+	//m_rasterizer.setTexture(loadTexture("../assets/Moon.bmp"));
 	//m_rasterizer.setTexture(loadTexture("../assets/white.bmp"));
-	m_rasterizer.setMesh(rasterizer::Mesh::sphere());
+	//m_rasterizer.setMesh(rasterizer::Mesh::sphere());
 	//m_rasterizer.setMesh(rasterizer::Mesh::cube());
+	m_rasterizer.setMesh(rasterizer::loaders::loadObj("../assets/bunny.obj"));
 }
 
 int Application::run()
