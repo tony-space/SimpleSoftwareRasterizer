@@ -26,7 +26,7 @@ void Tile::scheduleTriangle(const std::array<Vertex, 3>& triangle)
 
 		m_lock->store(false, std::memory_order::memory_order_release);
 	}
-	catch (const std::exception&)
+	catch (...)
 	{
 		m_lock->store(false, std::memory_order::memory_order_release);
 		throw;

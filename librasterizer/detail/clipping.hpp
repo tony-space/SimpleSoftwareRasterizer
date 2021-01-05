@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <variant>
 #include <vector>
 
@@ -35,6 +36,7 @@ struct RecursiveClipper
 	const typename TClippingPlanesType::const_iterator curPlane;
 	const typename TClippingPlanesType::const_iterator endPlane;
 
+	std::atomic_bool& outputLock;
 	std::vector<std::array<Vertex, 3>>& output;
 
 	template<typename T>
@@ -67,7 +69,7 @@ struct RecursiveClipper
 		{
 			if (plane == endPlane)
 			{
-				output.emplace_back(interpolatedTriangle);
+				emitTriangle(interpolatedTriangle);
 				return;
 			}
 
@@ -86,9 +88,31 @@ struct RecursiveClipper
 			interpolatedTriangle,
 			plane + 1,
 			endPlane,
+			outputLock,
 			output
 		};
 		std::visit(clipper, clippingResult);
+	}
+
+	void emitTriangle(const std::array<rasterizer::Vertex, 3>& interpolatedTriangle)
+	{
+		try
+		{
+			bool expected = false;
+			bool desired = true;
+			while (!outputLock.compare_exchange_weak(expected, desired, std::memory_order::memory_order_acquire, std::memory_order::memory_order_relaxed))
+			{
+				expected = false;
+			}
+
+			output.emplace_back(interpolatedTriangle);
+		}
+		catch (...)
+		{
+			outputLock.store(false, std::memory_order::memory_order_release);
+			throw;
+		}
+		outputLock.store(false, std::memory_order::memory_order_release);
 	}
 
 	template<>

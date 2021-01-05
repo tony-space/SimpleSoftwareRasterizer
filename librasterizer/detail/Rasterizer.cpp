@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include "basic-matrices.hpp"
 #include "clipping.hpp"
 #include "BoundingBox2D.hpp"
@@ -96,9 +98,10 @@ void Rasterizer::clippingStage()
 	};
 
 
+	std::atomic_bool lock{ false };
 	m_pipeline.projectedTriangles.clear();
 
-	for (const auto& trIn : m_mesh.triangles())
+	std::for_each(std::execution::par_unseq, m_mesh.triangles().cbegin(), m_mesh.triangles().cend(), [&](const glm::u16vec3& trIn)
 	{
 		constexpr std::array<glm::vec2, 3> rootTriangle{ glm::vec2{1.0f, 0.0f}, glm::vec2{0.0f, 1.0f}, glm::vec2{0.0f, 0.0f} };
 
@@ -112,11 +115,12 @@ void Rasterizer::clippingStage()
 			clippingPlanes.begin(),
 			clippingPlanes.end(),
 
+			lock,
 			m_pipeline.projectedTriangles
 		};
 
 		clipper(rootTriangle);
-	}
+	});
 }
 
 void Rasterizer::viewportTransformStage()
