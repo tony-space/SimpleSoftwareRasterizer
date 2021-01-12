@@ -3,14 +3,14 @@ It's an exercise to consolidate knowledge of homogeneous coordinates and rasteri
 
 This project is not intended to be the fastest and the best software renderer ever. If you need one please consider using [OpenSWR](https://www.openswr.org/) or [WARP](https://docs.microsoft.com/en-us/windows/win32/direct3darticles/directx-warp).
 
-![](screenshots/screenshot1.jpg)
-![](screenshots/screenshot2.jpg)
+![](showcase/screenshot1.jpg)
+![](showcase/screenshot2.jpg)
 
 ## How to run
 
 There are three ways to do that: 
 
-* Dowload a built executable from [releases](https://github.com/tony-space/SimpleSoftwareRasterizer/releases).
+* Download the executable from [releases](https://github.com/tony-space/SimpleSoftwareRasterizer/releases).
 * Using a standalone command. Run `build-and-run.bat`.
 * Using Visual Studio. To generate VS2019 solution run `gen-VS2019-x64.bat`. Then compile and run the app.
 
@@ -42,15 +42,15 @@ Firstly, objects behind the camera must not get projected on the screen:
 
 *Image by Scratchapixel. [Source](https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/projection-matrices-what-you-need-to-know-first).*
 
-Secondly, objects crossing the projective plane must not wrap around:
+Secondly, objects crossing the plane *w=0* must not wrap around:
 
-![](screenshots/clipping.jpg)
+![](showcase/clipping.jpg)
 
 *Image by J.F. Blinn and M.E. Newell. [Source](https://www.microsoft.com/en-us/research/wp-content/uploads/1978/01/p245-blinn.pdf)*
 
 
 The clipping process works with a custom set of planes. The clipper may leave the triangle as is or chop it onto multiple triangles as follows:
-![](screenshots/screenshot4.jpg)
+![](showcase/screenshot4.jpg)
 
 The clipper is semi-parallel. It processes mesh triangles in parallel.
 However, when it comes to emitting a new triangle, the clipper waits for a spin-lock.
@@ -74,8 +74,17 @@ Tiled rasterization is an optimization that increases the general level of paral
 Gamma correction is essential when it comes to light computation. It gets done in linear space because the light is essentially linear.
 However, monitors are non-linear. The generated image must be additionally post-processed before display.
 
-![](screenshots/screenshot3.jpg)
+![](showcase/screenshot3.jpg)
+
 *Left: gamma corrected image. Right: linear image.*
+
+If you take a closer look at the real image of the Moon, you'll see how sharp the [terminator](https://en.wikipedia.org/wiki/Terminator_(solar)) is. Check this out:
+
+![](showcase/real-moon.jpg)
+
+*The real image of the Moon. [Source](https://earthsky.org/moon-phases/is-it-a-quarter-or-a-half-moon).*
+
+The gamma correction process makes the resulting image lighting is more realistic.
 
 ## Limitations
 
