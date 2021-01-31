@@ -39,24 +39,17 @@ struct RecursiveClipper
 	std::atomic_bool& outputLock;
 	std::vector<std::array<Vertex, 3>>& output;
 
-	template<typename T>
-	void operator ()(const T&);
-
 	//discard triangle
-	template<>
-	void operator ()(const discard& /*empty*/)
+	void operator ()(const discard&)
 	{
 
 	}
-
-	template<>
+	
 	void operator ()(const leaveAsIs&)
 	{
 		std::terminate();
 	}
 
-	//write triangle
-	template<>
 	void operator ()(const std::array<glm::vec2, 3>& triangle)
 	{
 		const std::array<Vertex, 3> interpolatedTriangle{ interpolate(vertices, triangle[0]), interpolate(vertices, triangle[1]), interpolate(vertices, triangle[2]) };
@@ -115,7 +108,6 @@ struct RecursiveClipper
 		outputLock.store(false, std::memory_order::memory_order_release);
 	}
 
-	template<>
 	void operator ()(const std::array<glm::vec2, 4>& quad)
 	{
 		this->operator()(std::array<glm::vec2, 3>{quad[0], quad[1], quad[2]});
