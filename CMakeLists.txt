@@ -12,7 +12,13 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/x64)
 add_subdirectory(third-party/glm)
 
 include(shared.cmake)
-add_subdirectory(host-gdi)
+
+if (${CMAKE_SYSTEM_NAME} STREQUAL Windows)
+	add_subdirectory(host-gdi)
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+	add_subdirectory(host-gdk)
+endif()
+
 add_subdirectory(librasterizer)
 
 set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT "host-gdi")
