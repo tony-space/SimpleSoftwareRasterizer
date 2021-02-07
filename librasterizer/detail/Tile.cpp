@@ -35,7 +35,7 @@ void Tile::scheduleTriangle(const std::array<Vertex, 3>& triangle)
 
 void Tile::rasterize(const BoundingBox2D& tileBox, const UniformData& uniforms) noexcept
 {
-	std::fill(m_color.begin(), m_color.end(), glm::vec4(0.0f));
+	std::fill(m_color.begin(), m_color.end(), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 	std::fill(m_depth.begin(), m_depth.end(), 1.0f);
 
 	for (const auto& trianglePtr : m_triangles)
@@ -98,7 +98,7 @@ void Tile::drawImpl(const UniformData& uniforms, const std::array<Vertex, 3>& tr
 
 	//Lambertian BRDF
 	const auto diffuse = glm::clamp(glm::dot(glm::normalize(interpolatedNormal.xyz()), uniforms.lightPos), 0.01f, 1.0f);
-	color = diffuse * uniforms.texture.sample(interpolatedTc);
+	color = glm::vec4(glm::vec3(diffuse), 1.0f) * uniforms.texture.sample(interpolatedTc);
 }
 
 glm::vec4 Tile::barycentric(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c, const glm::vec2& point) noexcept

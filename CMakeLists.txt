@@ -16,7 +16,7 @@ include(shared.cmake)
 if (${CMAKE_SYSTEM_NAME} STREQUAL Windows)
 	add_subdirectory(host-gdi)
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
-	add_subdirectory(host-gdk)
+	add_subdirectory(host-gtk)
 endif()
 
 add_subdirectory(librasterizer)

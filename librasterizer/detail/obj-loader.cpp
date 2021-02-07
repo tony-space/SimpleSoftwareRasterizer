@@ -32,7 +32,7 @@ Mesh loadObj(const std::filesystem::path& path)
 
 	if (file.fail())
 	{
-		throw std::invalid_argument("cannot open " + path.string());
+		throw std::system_error(std::make_error_code(std::errc::no_such_file_or_directory));
 	}
 	static const auto commentRegex = std::regex("\\s*#.*");
 	static const auto emptyString = std::regex("\\s*");

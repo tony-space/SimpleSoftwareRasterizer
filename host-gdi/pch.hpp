@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <vector>
 
 #include "../librasterizer/pch.hpp"
