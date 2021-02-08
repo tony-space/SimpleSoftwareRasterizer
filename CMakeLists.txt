@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.9)
 
 project(SimpleSoftwareRasterizer LANGUAGES CXX)
 

@@ -22,7 +22,7 @@ public:
 		Texture& texture;
 	};
 
-	static constexpr size_t kSize = 64;
+	static constexpr size_t kSize = TILE_SIZE; //see CMakeLists.txt
 
 	Tile() = default;
 	Tile(const Tile&) = delete;

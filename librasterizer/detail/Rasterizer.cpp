@@ -70,12 +70,12 @@ void Rasterizer::vertexStage()
 
 	const auto modelViewProjectionMat = m_pipeline.matrices.projection * m_pipeline.matrices.modelView;
 
-	std::transform(std::execution::par_unseq, positions.cbegin(), positions.cend(), positionsOut.begin(), [&](const glm::vec3& in)
+	std::transform(TRY_PARALLELIZE_PAR_UNSEQ positions.cbegin(), positions.cend(), positionsOut.begin(), [&](const glm::vec3& in)
 	{
 		return modelViewProjectionMat * glm::vec4(in, 1.0f);
 	});
 
-	std::transform(std::execution::par_unseq, normals.cbegin(), normals.cend(), normalsOut.begin(), [&](const glm::vec3& in) -> glm::vec3
+	std::transform(TRY_PARALLELIZE_PAR_UNSEQ normals.cbegin(), normals.cend(), normalsOut.begin(), [&](const glm::vec3& in) -> glm::vec3
 	{
 		return m_pipeline.matrices.normal * glm::vec4(in, 0.0f);
 	});
@@ -99,7 +99,7 @@ void Rasterizer::clippingStage()
 	std::atomic_bool lock{ false };
 	m_pipeline.projectedTriangles.clear();
 
-	std::for_each(std::execution::par_unseq, m_mesh.triangles().cbegin(), m_mesh.triangles().cend(), [&](const glm::u16vec3& trIn)
+	std::for_each(TRY_PARALLELIZE_PAR_UNSEQ m_mesh.triangles().cbegin(), m_mesh.triangles().cend(), [&](const glm::u16vec3& trIn)
 	{
 		constexpr std::array<glm::vec2, 3> rootTriangle{ glm::vec2{1.0f, 0.0f}, glm::vec2{0.0f, 1.0f}, glm::vec2{0.0f, 0.0f} };
 
@@ -123,7 +123,7 @@ void Rasterizer::clippingStage()
 
 void Rasterizer::viewportTransformStage()
 {
-	std::for_each(std::execution::par_unseq, m_pipeline.projectedTriangles.begin(), m_pipeline.projectedTriangles.end(), [&](std::array<Vertex, 3>& triangle)
+	std::for_each(TRY_PARALLELIZE_PAR_UNSEQ m_pipeline.projectedTriangles.begin(), m_pipeline.projectedTriangles.end(), [&](std::array<Vertex, 3>& triangle)
 	{
 		for (Vertex& v : triangle)
 		{
@@ -137,7 +137,7 @@ void Rasterizer::viewportTransformStage()
 
 void Rasterizer::rasterizationStage()
 {
-	std::for_each(std::execution::par_unseq, m_pipeline.projectedTriangles.cbegin(), m_pipeline.projectedTriangles.cend(), [&](const std::array<Vertex, 3>& triangle)
+	std::for_each(TRY_PARALLELIZE_PAR_UNSEQ m_pipeline.projectedTriangles.cbegin(), m_pipeline.projectedTriangles.cend(), [&](const std::array<Vertex, 3>& triangle)
 	{
 		const auto triangleBox = BoundingBox2D{ triangle[0].position.xy(), triangle[1].position.xy(), triangle[2].position.xy() };
 		const auto minPixel = glm::uvec2(glm::ceil(triangleBox.min()));
@@ -157,7 +157,7 @@ void Rasterizer::rasterizationStage()
 		}
 	});
 
-	std::for_each(std::execution::par_unseq, m_framebuffer.grid.begin(), m_framebuffer.grid.end(), [&](Tile& tile)
+	std::for_each(TRY_PARALLELIZE_PAR_UNSEQ m_framebuffer.grid.begin(), m_framebuffer.grid.end(), [&](Tile& tile)
 	{
 		const auto idx = std::distance(m_framebuffer.grid.data(), &tile);
 		const auto [yTile, xTile] = std::div(idx, m_framebuffer.gridDim.x);
@@ -175,7 +175,7 @@ void Rasterizer::swapBuffers(std::vector<gamma_bgra_t>& out)
 {
 	out.resize(size_t(m_framebuffer.screenSize.x) * size_t(m_framebuffer.screenSize.y));
 
-	std::for_each(std::execution::par_unseq, out.begin(), out.end(), [&](gamma_bgra_t& result)
+	std::for_each(TRY_PARALLELIZE_PAR_UNSEQ out.begin(), out.end(), [&](gamma_bgra_t& result)
 	{
 		const auto idx = std::distance(out.data(), &result);
 		const auto [yPixel, xPixel] = std::div(idx, m_framebuffer.screenSize.x);

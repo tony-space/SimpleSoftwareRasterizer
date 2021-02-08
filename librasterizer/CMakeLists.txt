@@ -1,6 +1,7 @@
 project(librasterizer)
 
 set(SRC
+	include/rasterizer/finally.hpp
 	include/rasterizer/gamma_bgra_t.hpp
 	include/rasterizer/linear_rgba_t.hpp
 	include/rasterizer/Mesh.hpp
@@ -39,3 +40,16 @@ target_precompile_headers(${PROJECT_NAME} PRIVATE pch.hpp)
 target_include_directories(${PROJECT_NAME} PUBLIC "include")
 target_link_libraries(${PROJECT_NAME} PRIVATE shared)
 target_link_libraries(${PROJECT_NAME} PUBLIC glm)
+
+#OpenMP dependency for Parallel STL (GCC)
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+	find_package(OpenMP)
+	if(OpenMP_CXX_FOUND)
+		target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+	endif()
+	target_compile_definitions(${PROJECT_NAME} PUBLIC TILE_SIZE=8)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC TRY_PARALLELIZE_PAR_UNSEQ=std::execution::par,)
+else()
+	target_compile_definitions(${PROJECT_NAME} PUBLIC TILE_SIZE=64)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC TRY_PARALLELIZE_PAR_UNSEQ=std::execution::par_unseq,)
+endif()

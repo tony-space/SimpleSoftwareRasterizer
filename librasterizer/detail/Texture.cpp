@@ -21,7 +21,7 @@ Texture::Texture(unsigned width, unsigned height, const std::vector<gamma_bgra_t
 
 	m_texels.resize(bitmap.size());
 
-	std::transform(std::execution::par_unseq, bitmap.cbegin(), bitmap.cend(), m_texels.begin(), [](const gamma_bgra_t& gamma)
+	std::transform(TRY_PARALLELIZE_PAR_UNSEQ bitmap.cbegin(), bitmap.cend(), m_texels.begin(), [](const gamma_bgra_t& gamma)
 	{
 		return glm::vec4
 		{

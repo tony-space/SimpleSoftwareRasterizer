@@ -1,10 +1,12 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <locale>
 
 #include "glm-include.hpp"
 #include "BoundingBox2D.hpp"
 
+#include <rasterizer/finally.hpp>
 #include <rasterizer/obj-loader.hpp>
 
 namespace rasterizer {
@@ -44,6 +46,13 @@ Mesh loadObj(const std::filesystem::path& path)
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec2> texCoords;
 	std::vector<glm::u16vec3> triangles;
+
+	const auto oldLocale=std::setlocale(LC_NUMERIC,nullptr);
+    std::setlocale(LC_NUMERIC,"C");
+	const auto _ = finally([&]
+	{
+        std::setlocale(LC_NUMERIC,oldLocale);
+	});
 
 	readRows(file, [&](const std::string& row)
 	{

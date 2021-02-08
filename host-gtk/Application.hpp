@@ -39,7 +39,6 @@ namespace gtk
 
 		void activateImpl(GtkApplication *app);
 		gboolean onDrawImpl(GtkWidget *widget, cairo_t *cr);
-		rasterizer::gamma_bgra_t *draw(unsigned width, unsigned height);
 		std::vector<rasterizer::gamma_bgra_t> m_framebuffer;
 		rasterizer::Rasterizer m_rasterizer;
 	};

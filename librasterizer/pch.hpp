@@ -12,6 +12,7 @@
 #include <initializer_list>
 #include <iterator>
 #include <limits>
+#include <locale>
 #include <memory>
 #include <mutex>
 #include <numeric>
