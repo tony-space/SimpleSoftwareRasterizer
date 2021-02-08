@@ -1,7 +1,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <locale>
+#include <clocale>
 
 #include "glm-include.hpp"
 #include "BoundingBox2D.hpp"
