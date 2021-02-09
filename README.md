@@ -10,22 +10,42 @@ This project is not intended to be the fastest and the best software renderer ev
 
 There are three ways to do that: 
 
-* Download the executable from [releases](https://github.com/tony-space/SimpleSoftwareRasterizer/releases).
-* Using a standalone command. Run `build-and-run.bat`.
-* Using Visual Studio. To generate VS2019 solution run `gen-VS2019-x64.bat`. Then compile and run the app.
+* Win & Linux: Download the executable from [releases](https://github.com/tony-space/SimpleSoftwareRasterizer/releases).
+* Windows: Using a standalone command. Run `build-and-run.bat`.
+* Windows: Using Visual Studio. To generate VS2019 solution run `gen-VS2019-x64.bat`. Then compile and run the app.
 
+### Building for Linux
+
+Prerequisites:
+
+* Install GCC-10. Debian-based distributions may require [the unstable repository](https://wiki.debian.org/DebianUnstable) to be referenced from `/ets/apt/sources.list`
+  - add `deb https://deb.debian.org/debian sid main` to `sources.list`
+  - `sudo apt-get update`
+  - `sudo apt-get install gcc-10 g++-10`
+  - add `export CC=gcc-10 CXX=g++-10` to `.bashrc` (makes CMake use GCC10 as a default compiler)
+* [Install CMake](https://cmake.org/install/)
+  - Requires `libssl-dev` package to be installed beforehand
+* Install libgtk-3-dev
+  - `sudo apt-get install libgtk-3-dev`
+* Build the app
+  - `mkdir build`
+  - `cd build`
+  - `cmake -DCMAKE_BUILD_TYPE=Release ..`
+  - `make`
+* Run the app
+  - `./x64/host-gtk` 
 ## Architecture
 
 There are only two modules:
 
 * `librasterizer` is a static library that does most of the job.
-* `host-gdi` is an executable that is in charge to create a window and output the result to it.
+* `host-gdi`/`host-gtk` is an executable that is in charge to create a window and output the result to it.
 
 ## Supported features
 
 * Basic obj file support (enough to load the Stanford Bunny).
 * Clipping in the homogeneous clip space (before perspective division).
-* Tiled rasterization.
+* Parallel tiled rasterization.
 * Perspective-correct interpolation of vertex attributes.
 * Per-pixel lighting via Lambertian BRDF.
 * Gamma correction.
@@ -88,7 +108,6 @@ The gamma correction process makes the resulting image lighting is more realisti
 
 ## Limitations
 
-* GDI-based. `librasterizer` is OS-agnostic itself. But I had no much time to play with [SDL](https://www.libsdl.org/) or an alternative.
 * No antialiasing.
 * No mipmap levels.
 * No texture filtering.
