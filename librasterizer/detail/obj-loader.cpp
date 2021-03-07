@@ -4,7 +4,6 @@
 #include <clocale>
 
 #include "glm-include.hpp"
-#include "BoundingBox2D.hpp"
 
 #include <rasterizer/finally.hpp>
 #include <rasterizer/obj-loader.hpp>
@@ -108,19 +107,30 @@ Mesh loadObj(const std::filesystem::path& path)
 		}
 	});
 
+	constexpr auto kFltMax = std::numeric_limits<float>::max();
+	const auto box3D = std::transform_reduce(TRY_PARALLELIZE_PAR_UNSEQ positions.cbegin(), positions.cend(), std::make_pair(glm::vec3(kFltMax), glm::vec3(-kFltMax)),
+		[](const std::pair<glm::vec3, glm::vec3>& lhs, const std::pair<glm::vec3, glm::vec3>& rhs)
+	{
+		return std::make_pair(glm::min(lhs.first, rhs.first), glm::max(lhs.second, rhs.second));
+	}, [](const glm::vec3& pos) {
+		return std::make_pair(pos, pos);
+	});
+	const auto boxSize = box3D.second - box3D.first;
+	const auto boxCenter = boxSize * 0.5f + box3D.first;
+
 	if (texCoords.empty())
 	{
-		BoundingBox2D box;
-		for (const auto& pos : positions)
-			box.add(pos.xy());
-
 		texCoords.resize(positions.size());
-
-		std::transform(positions.cbegin(), positions.cend(), texCoords.begin(), [&](const glm::vec3& pos)
+		std::transform(TRY_PARALLELIZE_PAR_UNSEQ positions.cbegin(), positions.cend(), texCoords.begin(), [&](const glm::vec3& pos)
 		{
-			return (pos.xy() - box.min()) / box.size();
+			return (pos.xy() - box3D.first.xy()) / boxSize.xy();
 		});
 	}
+
+	std::transform(TRY_PARALLELIZE_PAR_UNSEQ positions.cbegin(), positions.cend(), positions.begin(), [&](const glm::vec3& pos)
+	{
+		return pos - boxCenter;
+	});
 
 	Mesh result{ unsigned(positions.size()), unsigned(triangles.size()) };
 

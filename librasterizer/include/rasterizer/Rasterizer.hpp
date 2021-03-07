@@ -53,7 +53,7 @@ private:
 		float zFar{ 6.0f };
 		glm::vec3 lightDir{ glm::normalize(glm::vec3{1.0f, 1.0f, -1.0f}) };
 
-		glm::vec3 translate{ 0.0f, -1.0f, 4.0f };
+		glm::vec3 translate{ 0.0f, -0.0f, 4.0f };
 		glm::vec3 rotateDeg{ -10.0f, 0.0f, 0.0f };
 		glm::vec3 scale{ 1.0f, 1.0f, 1.0f };
 	} m_parameters;

@@ -38,8 +38,9 @@ void Rasterizer::resetViewport(unsigned width, unsigned height)
 
 void Rasterizer::updateScene()
 {
-	//m_parameters.rotateDeg.x -= 0.25f;
+	m_parameters.rotateDeg.x -= 0.25f;
 	m_parameters.rotateDeg.y -= 0.5f;
+	m_parameters.rotateDeg.z -= 0.75f;
 
 	/*static uint64_t frameIdx = 0;
 	m_parameters.translate.z = glm::cos(frameIdx * 0.01f) + 0.5f;
@@ -248,7 +249,7 @@ void Rasterizer::postProcessingStage()
 
 		//Lambertian BRDF
 		const auto diffuse = glm::clamp(glm::dot(normal, m_parameters.lightDir) * float(occluded), 0.01f, 1.0f);
-		out = diffuse * color;
+		out = glm::vec4(diffuse * color.rgb(), 1.0f);
 	});
 }
 
