@@ -30,8 +30,8 @@ Application::Application(HINSTANCE hInstance, int nShowCmd)
 		WS_OVERLAPPEDWINDOW,		// window style
 		CW_USEDEFAULT,				// initial x position
 		CW_USEDEFAULT,				// initial y position
-		400,						// initial x size
-		300,						// initial y size
+		800,						// initial x size
+		600,						// initial y size
 		NULL,						// parent window handle
 		NULL,						// window menu handle
 		hInstance,					// program instance handle

@@ -31,7 +31,7 @@ void Rasterizer::resetViewport(unsigned width, unsigned height)
 	m_framebuffer.screenSize = { width, height };
 	m_framebuffer.gridDim = Tile::computeGridDim(m_framebuffer.screenSize);
 	m_framebuffer.grid.resize(size_t(m_framebuffer.gridDim.x) * size_t(m_framebuffer.gridDim.y));
-	
+
 	m_pipeline.matrices.viewport = matrices::viewportTransformMatrix(float(width), float(height));
 	m_pipeline.matrices.projection = matrices::projectionMatrix(float(width), float(height), m_parameters.verticalFovDeg, m_parameters.zNear, m_parameters.zFar);
 }
@@ -55,6 +55,7 @@ void Rasterizer::runPipleine()
 	clippingStage();
 	viewportTransformStage();
 	rasterizationStage();
+	postProcessingStage();
 }
 
 void Rasterizer::vertexStage()
@@ -157,6 +158,11 @@ void Rasterizer::rasterizationStage()
 		}
 	});
 
+	const auto totalPixels = size_t(m_framebuffer.screenSize.x) * size_t(m_framebuffer.screenSize.y);
+	m_postProcessing.color.resize(totalPixels);
+	m_postProcessing.normal.resize(totalPixels);
+	m_postProcessing.depth.resize(totalPixels);
+
 	std::for_each(TRY_PARALLELIZE_PAR_UNSEQ m_framebuffer.grid.begin(), m_framebuffer.grid.end(), [&](Tile& tile)
 	{
 		const auto idx = std::distance(m_framebuffer.grid.data(), &tile);
@@ -167,7 +173,82 @@ void Rasterizer::rasterizationStage()
 
 		const auto tileBox = BoundingBox2D{ tileMin, tileMax };
 
-		tile.rasterize(tileBox, { /*m_pipeline.matrices.modelView **/ glm::vec4(m_parameters.lightPos, 0.0f), m_texture});
+		tile.rasterize(tileBox, { m_texture });
+
+		for (size_t yPixel = 0; yPixel < Tile::kSize; ++yPixel)
+		{
+			for (size_t xPixel = 0; xPixel < Tile::kSize; ++xPixel)
+			{
+				const auto framebufferX = xTile * Tile::kSize + xPixel;
+				const auto framebufferY = yTile * Tile::kSize + yPixel;
+				if (framebufferX >= m_framebuffer.screenSize.x || framebufferY >= m_framebuffer.screenSize.y)
+				{
+					continue;
+				}
+
+				const auto outIdx = framebufferY * size_t(m_framebuffer.screenSize.x) + framebufferX;
+				m_postProcessing.color[outIdx] = tile.colorAt(xPixel, yPixel);
+				m_postProcessing.normal[outIdx] = tile.normalAt(xPixel, yPixel);
+				m_postProcessing.depth[outIdx] = tile.depthAt(xPixel, yPixel);
+			}
+		}
+	});
+}
+
+void Rasterizer::postProcessingStage()
+{
+	const auto totalPixels = size_t(m_framebuffer.screenSize.x) * size_t(m_framebuffer.screenSize.y);
+	m_postProcessing.lit.resize(totalPixels);
+	m_postProcessing.output.resize(totalPixels);
+
+	const auto viewportProjection = m_pipeline.matrices.viewport * m_pipeline.matrices.projection;
+	const auto inverseViewportProjection = glm::inverse(viewportProjection);
+
+	// screen-space shadows
+	std::for_each(TRY_PARALLELIZE_PAR_UNSEQ m_postProcessing.lit.begin(), m_postProcessing.lit.end(), [&](char& lit)
+	{
+		constexpr auto kSteps = 32;
+		constexpr auto kMaxDistance = 2.0f;
+		constexpr auto kStepLength = kMaxDistance / kSteps;
+
+		const auto idx = std::distance(m_postProcessing.lit.data(), &lit);
+		const auto [yPixel, xPixel] = std::div(idx, m_framebuffer.screenSize.x);
+
+		const auto fragmentPos = inverseViewportProjection * glm::vec4(xPixel, yPixel, m_postProcessing.depth[idx], 1.0f);
+		auto samplePos = fragmentPos / fragmentPos.w;
+
+		for (auto i = 0; i < kSteps; ++i)
+		{
+			samplePos += glm::vec4(m_parameters.lightDir, 0.0f) * kStepLength;
+
+			auto sampleProj = viewportProjection * samplePos;
+			auto sampleDepth = sampleProj.z / sampleProj.w;
+			auto pixel = glm::round(sampleProj.xy() / sampleProj.w);
+
+			if (pixel.x < 0.0f || pixel.y < 0.0f || pixel.x >= m_framebuffer.screenSize.x || pixel.y >= m_framebuffer.screenSize.y)
+				break;
+
+			const auto imageDepth = m_postProcessing.depth[size_t(m_framebuffer.screenSize.x) * size_t(pixel.y) + size_t(pixel.x)];
+			if (imageDepth < sampleDepth)
+			{
+				lit = false;
+				return;
+			}
+		}
+		lit = true;
+	});
+
+	// lighting pass
+	std::for_each(TRY_PARALLELIZE_PAR_UNSEQ m_postProcessing.output.begin(), m_postProcessing.output.end(), [&](glm::vec4& out)
+	{
+		const auto idx = std::distance(m_postProcessing.output.data(), &out);
+		const auto normal = m_postProcessing.normal[idx];
+		const auto color = m_postProcessing.color[idx];
+		const auto occluded = m_postProcessing.lit[idx];
+
+		//Lambertian BRDF
+		const auto diffuse = glm::clamp(glm::dot(normal, m_parameters.lightDir) * float(occluded), 0.01f, 1.0f);
+		out = diffuse * color;
 	});
 }
 
@@ -178,13 +259,8 @@ void Rasterizer::swapBuffers(std::vector<gamma_bgra_t>& out)
 	std::for_each(TRY_PARALLELIZE_PAR_UNSEQ out.begin(), out.end(), [&](gamma_bgra_t& result)
 	{
 		const auto idx = std::distance(out.data(), &result);
-		const auto [yPixel, xPixel] = std::div(idx, m_framebuffer.screenSize.x);
-		const auto xTile = xPixel / Tile::kSize;
-		const auto yTile = yPixel / Tile::kSize;
-		const auto tileIdx = m_framebuffer.gridDim.x * yTile + xTile;
-		const auto& tile = m_framebuffer.grid[tileIdx];
 
-		const auto corrected = glm::pow(tile.at(xPixel - xTile * Tile::kSize, yPixel - yTile * Tile::kSize), glm::vec4(1.0f / 2.2f));
+		const auto corrected = glm::pow(m_postProcessing.output[idx], glm::vec4(1.0f / 2.2f));
 		result.b = uint8_t(corrected.b * 255.0f);
 		result.g = uint8_t(corrected.g * 255.0f);
 		result.r = uint8_t(corrected.r * 255.0f);

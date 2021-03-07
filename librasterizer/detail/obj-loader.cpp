@@ -40,18 +40,20 @@ Mesh loadObj(const std::filesystem::path& path)
 	static const auto emptyString = std::regex("\\s*");
 	static const auto vertexRegex = std::regex("\\s*v (-?[\\d.]+(?:e-?\\d+)?) (-?[\\d.]+(?:e-?\\d+)?) (-?[\\d.]+(?:e-?\\d+)?)");
 	static const auto normalRegex = std::regex("\\s*vn (-?[\\d.]+(?:e-?\\d+)?) (-?[\\d.]+(?:e-?\\d+)?) (-?[\\d.]+(?:e-?\\d+)?)");
-	static const auto triangleRegex = std::regex("\\s*f ((\\d*)\\/(\\d*)\\/(\\d*)) ((\\d*)\\/(\\d*)\\/(\\d*)) ((\\d*)\\/(\\d*)\\/(\\d*))");
+	static const auto triangleRegex = std::regex("\\s*f ((\\d+)\\/(\\d*)\\/(\\d*)) ((\\d+)\\/(\\d*)\\/(\\d*)) ((\\d+)\\/(\\d*)\\/(\\d*))");
+	static const auto triangleRegex2 = std::regex("\\s*f (\\d+) (\\d+) (\\d+)");
+	static const auto groupRegex = std::regex("\\s*g.*");
 
 	std::vector<glm::vec3> positions;
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec2> texCoords;
 	std::vector<glm::u16vec3> triangles;
 
-	const auto oldLocale=std::setlocale(LC_NUMERIC,nullptr);
-    std::setlocale(LC_NUMERIC,"C");
+	const auto oldLocale = std::setlocale(LC_NUMERIC, nullptr);
+	std::setlocale(LC_NUMERIC, "C");
 	const auto _ = finally([&]
 	{
-        std::setlocale(LC_NUMERIC,oldLocale);
+		std::setlocale(LC_NUMERIC, oldLocale);
 	});
 
 	readRows(file, [&](const std::string& row)
@@ -63,6 +65,10 @@ Mesh loadObj(const std::filesystem::path& path)
 			return;
 		}
 		else if (std::regex_match(row, match, emptyString))
+		{
+			return;
+		}
+		else if (std::regex_match(row, match, groupRegex))
 		{
 			return;
 		}
@@ -88,6 +94,14 @@ Mesh loadObj(const std::filesystem::path& path)
 				std::stoi(match[10]) - 1,
 				});
 		}
+		else if (std::regex_match(row, match, triangleRegex2))
+		{
+			triangles.emplace_back(glm::u16vec3{
+				std::stoi(match[1]) - 1,
+				std::stoi(match[2]) - 1,
+				std::stoi(match[3]) - 1,
+				});
+		}
 		else
 		{
 			throw std::runtime_error("unknown token: " + row);
@@ -111,9 +125,16 @@ Mesh loadObj(const std::filesystem::path& path)
 	Mesh result{ unsigned(positions.size()), unsigned(triangles.size()) };
 
 	result.setPositions(std::move(positions));
-	result.setNormals(std::move(normals));
 	result.setTexCoords0(std::move(texCoords));
 	result.setTriangles(std::move(triangles));
+	if (normals.empty())
+	{
+		result.computeNormals();
+	}
+	else
+	{
+		result.setNormals(std::move(normals));
+	}
 
 	return result;
 }

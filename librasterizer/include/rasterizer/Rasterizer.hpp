@@ -37,15 +37,24 @@ private:
 		std::vector<Tile> grid;
 	} m_framebuffer;
 
+	struct PostProcessing
+	{
+		std::vector<glm::vec4> color;
+		std::vector<glm::vec3> normal;
+		std::vector<float> depth;
+		std::vector<char> lit; //screen-space shadows
+		std::vector<glm::vec4> output;
+	} m_postProcessing;
+
 	struct Parameters
 	{
 		float verticalFovDeg{ 60.0f };
 		float zNear{ 0.5f };
-		float zFar{ 5.0f };
-		glm::vec3 lightPos{ glm::normalize(glm::vec3{1.0f, 1.0f, -1.0f}) };
+		float zFar{ 6.0f };
+		glm::vec3 lightDir{ glm::normalize(glm::vec3{1.0f, 1.0f, -1.0f}) };
 
-		glm::vec3 translate{ 0.0f, -1.0f, 3.0f };
-		glm::vec3 rotateDeg{ 0.0f, 0.0f, 0.0f };
+		glm::vec3 translate{ 0.0f, -1.0f, 4.0f };
+		glm::vec3 rotateDeg{ -10.0f, 0.0f, 0.0f };
 		glm::vec3 scale{ 1.0f, 1.0f, 1.0f };
 	} m_parameters;
 
@@ -79,6 +88,7 @@ private:
 	void clippingStage();
 	void viewportTransformStage();
 	void rasterizationStage();
+	void postProcessingStage();
 	void swapBuffers(std::vector<gamma_bgra_t>& out);
 };
 

@@ -11,26 +11,11 @@ static T interpolate(const glm::vec3& barycentricPerZ, float interpolatedOrigina
 	return interpolatedOriginalZ * (barycentricPerZ.x * f1 + barycentricPerZ.y * f2 + barycentricPerZ.z * f3);
 }
 
-void Tile::scheduleTriangle(const std::array<Vertex, 3>& triangle)
+void Tile::scheduleTriangle(const std::array<Vertex, 3>& triangle) noexcept
 {
-	try
-	{
-		bool expected = false;
-		bool desired = true;
-		while (!m_lock->compare_exchange_weak(expected, desired, std::memory_order::memory_order_acquire, std::memory_order::memory_order_relaxed))
-		{
-			expected = false;
-		}
-
-		m_triangles.emplace_back(&triangle);
-
-		m_lock->store(false, std::memory_order::memory_order_release);
-	}
-	catch (...)
-	{
-		m_lock->store(false, std::memory_order::memory_order_release);
-		throw;
-	}
+	while (m_lock->exchange(true, std::memory_order::memory_order_acquire)) {};
+	m_triangles.emplace_back(&triangle);
+	m_lock->store(false, std::memory_order::memory_order_release);
 }
 
 void Tile::rasterize(const BoundingBox2D& tileBox, const UniformData& uniforms) noexcept
@@ -62,7 +47,7 @@ void Tile::rasterize(const BoundingBox2D& tileBox, const UniformData& uniforms) 
 					continue;*/
 
 				const auto idx = stride + x;
-				drawImpl(uniforms, triangle, barycentricPos, m_color[idx], m_depth[idx]);
+				drawImpl(uniforms, triangle, barycentricPos, m_color[idx], m_normal[idx], m_depth[idx]);
 			}
 		}
 	}
@@ -70,9 +55,19 @@ void Tile::rasterize(const BoundingBox2D& tileBox, const UniformData& uniforms) 
 	m_triangles.clear();
 }
 
-glm::vec4 Tile::at(size_t x, size_t y) const noexcept
+glm::vec4 Tile::colorAt(size_t x, size_t y) const noexcept
 {
 	return m_color[y * kSize + x];
+}
+
+glm::vec3 Tile::normalAt(size_t x, size_t y) const noexcept
+{
+	return m_normal[y * kSize + x];
+}
+
+float Tile::depthAt(size_t x, size_t y) const noexcept
+{
+	return m_depth[y * kSize + x];
 }
 
 glm::uvec2 Tile::computeGridDim(glm::uvec2 screenSize) noexcept
@@ -80,7 +75,7 @@ glm::uvec2 Tile::computeGridDim(glm::uvec2 screenSize) noexcept
 	return (screenSize - glm::uvec2(1)) / glm::uvec2(kSize) + glm::uvec2(1);
 }
 
-void Tile::drawImpl(const UniformData& uniforms, const std::array<Vertex, 3>& triangle, glm::vec3 barycentricPos, glm::vec4& color, float& depth) noexcept
+void Tile::drawImpl(const UniformData& uniforms, const std::array<Vertex, 3>& triangle, glm::vec3 barycentricPos, glm::vec4& color, glm::vec3& normal, float& depth) noexcept
 {
 	const auto barycentricPerZ = barycentricPos / glm::vec3(triangle[0].position.w, triangle[1].position.w, triangle[2].position.w);					// (alpha/Za, beta/Zb, gamma/Zc)
 	const auto interpolatedOriginalZ = 1.0f / (barycentricPerZ.x + barycentricPerZ.y + barycentricPerZ.z);												// 1 / (alpha/Za + beta/Zb + gamma/Zc)
@@ -96,9 +91,8 @@ void Tile::drawImpl(const UniformData& uniforms, const std::array<Vertex, 3>& tr
 	const auto interpolatedNormal = interpolate(barycentricPerZ, interpolatedOriginalZ, triangle[0].normal, triangle[1].normal, triangle[2].normal);
 	const auto interpolatedTc = interpolate(barycentricPerZ, interpolatedOriginalZ, triangle[0].texCoord0, triangle[1].texCoord0, triangle[2].texCoord0);
 
-	//Lambertian BRDF
-	const auto diffuse = glm::clamp(glm::dot(glm::normalize(interpolatedNormal.xyz()), uniforms.lightPos), 0.01f, 1.0f);
-	color = glm::vec4(glm::vec3(diffuse), 1.0f) * uniforms.texture.sample(interpolatedTc);
+	color = uniforms.texture.sample(interpolatedTc);
+	normal = glm::normalize(interpolatedNormal.xyz());
 }
 
 glm::vec4 Tile::barycentric(const glm::vec2& a, const glm::vec2& b, const glm::vec2& c, const glm::vec2& point) noexcept

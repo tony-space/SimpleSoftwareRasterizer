@@ -27,6 +27,8 @@ public:
 	const std::vector<glm::vec2>& texCoords0() const noexcept;
 	const std::vector<glm::u16vec3>& triangles() const noexcept;
 
+	void computeNormals();
+
 	static const Mesh& cube();
 	static const Mesh& sphere();
 

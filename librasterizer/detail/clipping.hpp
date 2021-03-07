@@ -87,24 +87,10 @@ struct RecursiveClipper
 		std::visit(clipper, clippingResult);
 	}
 
-	void emitTriangle(const std::array<rasterizer::Vertex, 3>& interpolatedTriangle)
+	void emitTriangle(const std::array<rasterizer::Vertex, 3>& interpolatedTriangle) noexcept
 	{
-		try
-		{
-			bool expected = false;
-			bool desired = true;
-			while (!outputLock.compare_exchange_weak(expected, desired, std::memory_order::memory_order_acquire, std::memory_order::memory_order_relaxed))
-			{
-				expected = false;
-			}
-
-			output.emplace_back(interpolatedTriangle);
-		}
-		catch (...)
-		{
-			outputLock.store(false, std::memory_order::memory_order_release);
-			throw;
-		}
+		while (outputLock.exchange(true, std::memory_order::memory_order_acquire)) {};
+		output.emplace_back(interpolatedTriangle);
 		outputLock.store(false, std::memory_order::memory_order_release);
 	}
 
