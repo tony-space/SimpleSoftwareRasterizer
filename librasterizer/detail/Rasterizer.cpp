@@ -224,7 +224,7 @@ void Rasterizer::postProcessingStage()
 
 			auto sampleProj = viewportProjection * samplePos;
 			auto sampleDepth = sampleProj.z / sampleProj.w;
-			auto pixel = glm::round(sampleProj.xy() / sampleProj.w);
+			auto pixel = glm::u16vec2(sampleProj.xy() / sampleProj.w);
 
 			if (pixel.x < 0.0f || pixel.y < 0.0f || pixel.x >= m_framebuffer.screenSize.x || pixel.y >= m_framebuffer.screenSize.y)
 				break;
@@ -260,8 +260,10 @@ void Rasterizer::swapBuffers(std::vector<gamma_bgra_t>& out)
 	std::for_each(TRY_PARALLELIZE_PAR_UNSEQ out.begin(), out.end(), [&](gamma_bgra_t& result)
 	{
 		const auto idx = std::distance(out.data(), &result);
+		const auto color = m_postProcessing.output[idx];
 
-		const auto corrected = glm::pow(m_postProcessing.output[idx], glm::vec4(1.0f / 2.2f));
+		//const auto corrected = glm::pow(color, glm::vec4(1.0f / 2.2f));
+		const auto corrected = 1.138f * glm::sqrt(color) - 0.138f * color; //an approximation
 		result.b = uint8_t(corrected.b * 255.0f);
 		result.g = uint8_t(corrected.g * 255.0f);
 		result.r = uint8_t(corrected.r * 255.0f);
