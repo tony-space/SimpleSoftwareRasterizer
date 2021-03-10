@@ -21,6 +21,7 @@ void Tile::scheduleTriangle(const std::array<Vertex, 3>& triangle) noexcept
 void Tile::rasterize(const BoundingBox2D& tileBox, const UniformData& uniforms) noexcept
 {
 	std::fill(m_color.begin(), m_color.end(), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+	std::fill(m_normal.begin(), m_normal.end(), glm::vec3(0.0f));
 	std::fill(m_depth.begin(), m_depth.end(), 1.0f);
 
 	for (const auto& trianglePtr : m_triangles)

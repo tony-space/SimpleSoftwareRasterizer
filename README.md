@@ -106,6 +106,42 @@ If you take a closer look at the real image of the Moon, you'll see how sharp th
 
 The gamma correction process makes the resulting image lighting is more realistic.
 
+### Screen space shadows (SSS)
+Screen space shadows is a rendering method based on an approximation that the information stored in the framebuffer is sufficient to reconstruct shadows.
+To start using this technique we need to prepare a so-called G-buffer first. This is simply three textures: albedo, normals, and depth.
+
+![](showcase/gbuffer.jpg)
+
+*From left to right: albedo, normal and depth buffers*
+
+When the rasterization process is over, the post-processing stage begins.
+To build shadows, we take the depth buffer and start considering it as a 3D function *z=f(x,y)* plot.
+Each pixel of the buffer is tested via tracing rays to the light source.
+If the ray intersects other parts of the plot, this means the pixel is occluded.
+Thus the pixel is marked as 'in shadow'. In another case, it's marked as 'exposed'.
+The result of this process is just another texture. A shadow mask.
+
+![](showcase/shadowmask.gif)
+
+*A shadow mask*
+
+Then the so-called 'deferred shading' goes in.
+The shadow mask is used to determine if it's even necessary to start the BRDF calculation.
+If so, the albedo and normal textures are used to calculate Lambertian BRDF (dot product between normal and light direction).
+Otherwise, the ambient intensity is applied.
+
+And this is the result!
+
+![](showcase/shadows.gif) ![](showcase/shadowless.gif)
+
+*First: SSS + Lambertian BRDF. Second: Lambertian BRDF only.*
+
+Since the method is a rough approximation it produces quite notable artifacts sometimes. Here's a quite good example.
+
+![](showcase/artifact.jpg)
+
+*The artifact: the left ear must cast a thin shadow over the back, but it doesn't.*
+
 ## Limitations
 
 * No antialiasing.
