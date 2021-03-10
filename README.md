@@ -3,8 +3,8 @@ It's an exercise to consolidate knowledge of homogeneous coordinates and rasteri
 
 This project is not intended to be the fastest and the best software renderer ever. If you need one please consider using [OpenSWR](https://www.openswr.org/) or [WARP](https://docs.microsoft.com/en-us/windows/win32/direct3darticles/directx-warp).
 
-![](showcase/screenshot1.jpg)
-![](showcase/screenshot2.jpg)
+[![](showcase/thumbnail.jpg)](https://www.youtube.com/watch?v=blnUOKg35lg)
+[Youtube demo](https://www.youtube.com/watch?v=blnUOKg35lg).
 
 ## How to run
 
@@ -49,6 +49,7 @@ There are only two modules:
 * Perspective-correct interpolation of vertex attributes.
 * Per-pixel lighting via Lambertian BRDF.
 * Gamma correction.
+* Screen space shadows
 
 ### Clipping
 
@@ -64,13 +65,13 @@ Firstly, objects behind the camera must not get projected on the screen:
 
 Secondly, objects crossing the plane *w=0* must not wrap around:
 
-![](showcase/clipping.jpg)
+![](showcase/clipping-math.jpg)
 
 *Image by J.F. Blinn and M.E. Newell. [Source](https://www.microsoft.com/en-us/research/wp-content/uploads/1978/01/p245-blinn.pdf)*
 
 
 The clipping process works with a custom set of planes. The clipper may leave the triangle as is or chop it onto multiple triangles as follows:
-![](showcase/screenshot4.jpg)
+![](showcase/clipping.jpg)
 
 The clipper is semi-parallel. It processes mesh triangles in parallel.
 However, when it comes to emitting a new triangle, the clipper waits for a spin-lock.
@@ -94,7 +95,7 @@ Tiled rasterization is an optimization that increases the general level of paral
 Gamma correction is essential when it comes to light computation. It gets done in linear space because the light is essentially linear.
 However, monitors are non-linear. The generated image must be additionally post-processed before display.
 
-![](showcase/screenshot3.jpg)
+![](showcase/gamma.jpg)
 
 *Left: gamma corrected image. Right: linear image.*
 
