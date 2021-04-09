@@ -95,17 +95,8 @@ LRESULT Application::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		bitmapInfo.bmiHeader.biClrImportant = 0;
 		bitmapInfo.bmiColors[0] = {};
 
-		auto hBitmap = CreateDIBitmap(hDC, &bitmapInfo.bmiHeader, CBM_INIT, rawData, &bitmapInfo, DIB_RGB_COLORS);
-		auto hMemDC = CreateCompatibleDC(hDC);
-		auto hOldObj = SelectObject(hMemDC, hBitmap);
-		if (hOldObj)
-		{
-			auto success = SetMapMode(hMemDC, GetMapMode(hDC));
-			success = BitBlt(hDC, 0, 0, rect.right, rect.bottom, hMemDC, 0, 0, SRCCOPY);
-			SelectObject(hMemDC, hOldObj);
-		}
-		DeleteDC(hMemDC);
-		DeleteObject(hBitmap);
+		SetDIBitsToDevice(hDC, 0, 0, rect.right, rect.bottom, 0, 0, 0, rect.bottom, rawData, &bitmapInfo, DIB_RGB_COLORS);
+
 		EndPaint(hWnd, &ps);
 
 		static auto last = std::chrono::high_resolution_clock::now();
@@ -115,9 +106,9 @@ LRESULT Application::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(cur - last).count();
 		framesCounter++;
 
-		if (duration >= 2000)
+		if (duration >= 3000)
 		{
-			SetWindowTextA(hWnd, std::to_string(float(framesCounter) / 2.0f).c_str());
+			SetWindowTextA(hWnd, std::to_string(float(framesCounter) / (float(duration) / 1000.0f)).c_str());
 			framesCounter = 0;
 			last = cur;
 		}
